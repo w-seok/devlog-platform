@@ -1,0 +1,110 @@
+spring:
+  profiles:
+    group:
+      local: [ "local" ]
+      dev: [ "dev" ]
+      test: [ "test" ]
+      prod: [ "prod" ]
+    default: local
+
+  application:
+    name: devlog
+
+  datasource:
+    hikari:
+      jdbcUrl:
+      maximum-pool-size:
+      username:
+      password:
+      driver-class-name:
+      schema:
+
+  jpa:
+    show-sql:
+    hibernate:
+      naming:
+        physical-strategy:
+      ddl-auto:
+    generate-ddl:
+    properties:
+      hibernate:
+        format_sql:
+        dialect:
+
+  flyway:
+    locations:
+    sql-migration-suffixes:
+    baseline-on-migrate:
+    baseline-version:
+    default-schema:
+    enabled:
+
+  data:
+    redis:
+      host:
+      port:
+      database:
+      ssl-enabled:
+
+  servlet:
+    multipart:
+      enabled:
+      max-file-size:
+      max-request-size:
+
+  pid:
+    file: devlog.pid
+
+  lifecycle:
+    timeout-per-shutdown-phase: 35s
+
+server:
+  compression:
+    enabled: true
+  shutdown: graceful
+  port: ${API_SERVER_PORT:8080}
+
+app:
+  version: ${APP_VERSION:}
+  ip:
+    public: localhost
+    local: localhost
+
+management:
+  endpoint:
+    health:
+      show-details:
+  endpoints:
+    web:
+      exposure:
+        include:
+  metrics:
+    tags:
+      application:
+      app_version: ${app.version}
+      stage:
+  health:
+    diskspace:
+      path: /
+
+service:
+  s3:
+    file:
+      type:
+      prefix:
+      bucket_name:
+      region:
+      access_key:
+      secret_key:
+      profile_name:
+      replace_src:
+      replace_dest:
+  translate:
+    deepl:
+      url:
+      auth-key:
+
+whitelist:
+  metrics: ${API_WHITELIST_METRICS}
+  private: ${API_WHITELIST_PRIVATE:0:0:0:0:0:0:0:1, localhost, 127.0.0.1}
+  private-instance: 10.0

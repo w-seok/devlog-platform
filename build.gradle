@@ -1,0 +1,231 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.4'
+    id 'io.spring.dependency-management' version '1.1.4'
+
+    // checkstyle
+    id 'checkstyle'
+
+    // jacoco
+    id 'jacoco'
+
+    // sonarqube
+    id "org.sonarqube" version "3.1"
+}
+
+group = 'org.devlog'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    querydsl.extendsFrom compileClasspath
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    queryDslVersion = "5.1.0"
+    testcontainersVersion = "1.19.6"
+}
+
+bootJar {
+    enabled = true
+    destinationDirectory = file("$rootDir/$jarDestDir")
+    archiveFileName = "devlog.jar"
+}
+jar { enabled = false }
+
+clean {
+    delete "${rootDir}/${jarDestDir}/devlog.jar"
+}
+
+dependencies {
+
+    // Lombok & Mapstruct
+    compileOnly 'org.projectlombok:lombok'
+    implementation 'org.mapstruct:mapstruct:1.5.1.Final'
+    implementation 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    annotationProcessor "org.projectlombok:lombok-mapstruct-binding:0.2.0"
+    annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.1.Final'
+
+    // flyway
+    implementation 'org.flywaydb:flyway-core'
+
+    // https://mvnrepository.com/artifact/com.vladmihalcea/hibernate-types-60
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-60:3.5.1'
+
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // postgresql
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // aws
+    implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
+    implementation group: 'software.amazon.awssdk', name: 'bom', version: '2.17.105', ext: 'pom'
+    implementation 'software.amazon.awssdk:s3'
+    implementation group: 'software.amazon.awssdk', name: 's3control', version: '2.17.105'
+
+    // jwt
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+
+    // QueryDSL
+    implementation "com.querydsl:querydsl-core:${queryDslVersion}"
+    implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
+    annotationProcessor "com.querydsl:querydsl-apt:${queryDslVersion}:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"
+    testImplementation 'io.projectreactor:reactor-test'
+
+    // testContainer
+    testImplementation "org.testcontainers:testcontainers"
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'io.rest-assured:rest-assured'
+
+    // https://commons.apache.org/proper/commons-compress/security.html
+    implementation 'org.apache.commons:commons-compress:1.26.0'
+}
+
+//querydsl 셋업
+def querydslSrcDir = "${srcDir}/generated"
+tasks.withType(JavaCompile).configureEach {
+    options.generatedSourceOutputDirectory = file(querydslSrcDir)
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
+    }
+}
+
+checkstyle {
+    maxWarnings = 0
+    configFile = file("${rootDir}/lint/naver-checkstyle-rules.xml")
+    configProperties = ["suppressionFile": "${rootDir}/lint/naver-checkstyle-suppressions.xml"]
+    toolVersion = "10.13.0"
+}
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
+tasks.named('test') {
+    useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
+}
+
+def QDomains = []
+for (qPattern in '*.QA'..'*.QZ') { // qPattern = '*.QA', '*.QB', ... '*.QZ'
+    QDomains.add(qPattern + '*')
+}
+
+def jacocoExcludePatterns = [
+        // 측정 안하고 싶은 패턴
+        "**/*Application*",
+        "**/*Config*",
+        "**/*Exception*",
+        "**/*Request*",
+        "**/*Response*",
+        "**/*Dto*",
+        "**/*Interceptor*",
+        "**/*Filter*",
+        "**/*Resolver*",
+        "**/*Entity*",
+        "**/test/**",
+        "**/resources/**"
+]
+
+jacoco {
+    toolVersion = '0.8.11' // support jdk 21
+}
+
+jacocoTestReport {
+
+    dependsOn test
+
+    reports {
+        html.required = true
+        xml.required = true
+        csv.required = false
+
+        // 리포트의 저장 경로 설정
+        // layout.buildDirectory를 직접 사용하여 보고서 목적지 지정
+        html.destination file("${layout.buildDirectory.dir('reports/jacoco').get().asFile}/index.html")
+        xml.destination file("${layout.buildDirectory.dir('reports/jacoco').get().asFile}/index.xml")
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(
+                files(classDirectories.files.collect {
+                    fileTree(dir: it, excludes: jacocoExcludePatterns + QDomains) // Querydsl 관련 제거
+                })
+        )
+    }
+    finalizedBy jacocoTestCoverageVerification
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            enabled = true
+//            enabled = false
+            element = 'CLASS'
+
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.80
+            }
+
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.80
+            }
+
+            excludes = jacocoExcludePatterns + QDomains
+        }
+    }
+}
+
+sonarqube {
+    properties {
+        property "sonar.login", project["sonar.login"]
+        property "sonar.sourceEncoding", "UTF-8"
+        property "sonar.verbose", true
+        property "sonar.projectKey", "people"
+        property "sonar.projectName", "here"
+        property "sonar.scm.provider", "git"
+        property "sonar.language", "java"
+        property "sonar.coverage.exclusions", "**/*Test*.*, **/Q*.java, **/test/**, **/*Application.java"
+        property "sonar.java.junit.reportPaths", "${layout.buildDirectory.get()}/test-results"
+        property "sonar.sources", "${projectDir}/src/main/java"
+        property "sonar.tests", "${projectDir}/src/test/java"
+        property "sonar.binaries", "${layout.buildDirectory.get()}/classes"
+        property 'sonar.jacoco.reportPath', "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml"
+    }
+}

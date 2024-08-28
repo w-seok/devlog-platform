@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  db:
+    container_name: dev-log-db
+    image: postgres:15
+    volumes:
+      - ./.system/docker-data/postgres:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    ports:
+      - "54332:5432"
+    environment:
+      - TZ=Asia/Seoul
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=dl
+      - POSTGRES_PASSWORD=dl
+  redis:
+    container_name: dev-log-redis
+    image: redis:alpine3.19
+    command: redis-server --port 6379
+    volumes:
+      - ./.system/docker-data/redis:/data
+    labels:
+      - "name=redis"
+      - "mode=standalone"
+    ports:
+      - "63779:6379"
+  sonarqube:
+    container_name: dev-log-sonar
+    image: sonarqube:10.5.0-community
+    depends_on:
+      - db
+    environment:
+      # localhost:9090 최초 로그인시 admin/admin
+      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    volumes:
+      - ./.system/docker-data/sonar9/data:/opt/sonarqube/data
+      - ./.system/docker-data/sonar9/extensions:/opt/sonarqube/extensions
+      - ./.system/docker-data/sonar9/logs:/opt/sonarqube/logs
+      - ./.system/docker-data/sonar9/temp:/opt/sonarqube/temp
+    ports:
+      - "9090:9000"
