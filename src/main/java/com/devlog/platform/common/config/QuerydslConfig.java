@@ -49,7 +49,7 @@ public class QuerydslConfig {
 			@Override
 			public <T> CloseableIterator<T> iterate(Query query, @Nullable FactoryExpression<?> factoryExpression) {
 				Stream<T> stream = stream(query, factoryExpression);
-				return (CloseableIterator<T>)new IteratorAdapter<T>(stream.iterator(), stream::close);
+				return new IteratorAdapter<T>(stream.iterator(), stream::close);
 			}
 
 			@SuppressWarnings("unchecked & rawtypes")

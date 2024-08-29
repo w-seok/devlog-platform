@@ -93,7 +93,7 @@ public class IpAccessManager {
 					String[] ipAddressInArray = cidr[0].split("\\.");
 					int prefix = Integer.parseInt(cidr[1]);
 
-					BigInteger ipVal = new BigInteger("0");
+					BigInteger ipVal = BigInteger.ZERO;
 					for (int i = 0; i < ipAddressInArray.length; i++) {
 						int power = 3 - i;
 						int ipAddress = Integer.parseInt(ipAddressInArray[i]);
@@ -139,5 +139,4 @@ public class IpAccessManager {
 			return false;
 		}
 	}
-
 }

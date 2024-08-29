@@ -6,7 +6,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class RequestUtils {
 
-	private static final String DEVICE_IDENTIFIER = "Identifier";
 	private static final int ABUSING_COUNT_LIMIT = 3; // 어뷰징 요청 제한 횟수
 	private static final int ABUSING_TIME_LIMIT_SECONDS = 1; // 어뷰징 요청 제한 시간
 

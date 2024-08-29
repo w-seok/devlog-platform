@@ -64,8 +64,8 @@ public class ErrorControllerAdvice {
 	 */
 	@ExceptionHandler(value = ClientBindException.class)
 	public ResponseEntity<ErrorResDto> handleClientBindException(ClientBindException exception) {
-		log.error("바인딩 중 오류 발생", exception);
-		return ResponseEntity.badRequest().body(new ErrorResDto("바인딩 중 오류 발생"));
+		log.error("Client 바인딩 중 오류 발생", exception);
+		return ResponseEntity.badRequest().body(new ErrorResDto("Client 바인딩 중 오류 발생"));
 	}
 
 	/**
