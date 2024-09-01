@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.devlog.platform.common.annotation.CheckAbusing;
+import com.devlog.platform.common.annotation.PrivateNetwork;
 import com.devlog.platform.common.data.request.PasswordResetReqRec;
 import com.devlog.platform.common.data.request.SignInReqRec;
 import com.devlog.platform.common.data.request.SignUpReqRec;
-import com.devlog.platform.common.data.request.TokenReqRec;
-import com.devlog.platform.common.data.response.SignInResRec;
 import com.devlog.platform.common.exception.ClientBindException;
 import com.devlog.platform.common.service.AccountService;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,16 +64,17 @@ public class AccountController {
 	 */
 	@CheckAbusing
 	@PostMapping("/sign-in")
-	public ResponseEntity<SignInResRec> signIn(@Validated @RequestBody SignInReqRec signInReqRec,
+	public ResponseEntity<Long> signIn(HttpSession httpSession, @Validated @RequestBody SignInReqRec signInReqRec,
 		BindingResult result) throws
 		ClientBindException {
 
 		if (result.hasErrors()) {
 			throw new ClientBindException(result);
 		}
-		SignInResRec signInResRec = accountService.signIn(signInReqRec);
-		log.debug("{} 로그인 성공", signInReqRec.userId());
-		return ResponseEntity.ok().body(signInResRec);
+		Long accountId = accountService.signIn(signInReqRec);
+		httpSession.setAttribute("user", signInReqRec.email());
+		log.debug("{} 로그인 성공", signInReqRec.email());
+		return ResponseEntity.ok().body(accountId);
 	}
 
 	/**
@@ -82,6 +83,7 @@ public class AccountController {
 	 * @param result 바인딩 결과
 	 * @throws BindException 바인딩 오류
 	 */
+	@PrivateNetwork
 	@PutMapping("/password")
 	public ResponseEntity<String> modifyPassword(@Validated @RequestBody PasswordResetReqRec passwordResetReqRec,
 		BindingResult result) throws
@@ -92,26 +94,5 @@ public class AccountController {
 		}
 		accountService.updatePassword(passwordResetReqRec);
 		return ResponseEntity.ok().body("success");
-	}
-
-	/**
-	 * 토큰 재발급
-	 * accessToken의 만료 유무 확인 후 만료시 재발급
-	 * @param tokenReqRec 토큰 재발급 요청 정보
-	 * @return
-	 */
-	@PostMapping("/token")
-	public ResponseEntity<String> reissueToken(@Validated @RequestBody TokenReqRec tokenReqRec,
-		BindingResult result) throws BindException {
-		if (result.hasErrors()) {
-			throw new BindException(result);
-		}
-		try {
-			return ResponseEntity.ok(
-				accountService.reissueToken(tokenReqRec.accessToken(), tokenReqRec.refreshToken()));
-		} catch (Exception exception) {
-			log.error("토큰 재발급 실패", exception);
-			return ResponseEntity.badRequest().build();
-		}
 	}
 }

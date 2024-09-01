@@ -99,10 +99,6 @@ service:
       profile_name:
       replace_src:
       replace_dest:
-  translate:
-    deepl:
-      url:
-      auth-key:
 
 whitelist:
   metrics: ${API_WHITELIST_METRICS}

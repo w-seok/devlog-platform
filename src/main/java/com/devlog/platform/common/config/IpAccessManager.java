@@ -25,6 +25,12 @@ public class IpAccessManager {
 	private final ListRanges metricsRanges;
 	private final ListRanges instanceRanges;
 
+	/**
+	 * @param privateNetworks 사설 네트워크 IP 목록
+	 * @param metricsNetworks 메트릭 네트워크 IP 목록
+	 * @param privateInstances 사설 인스턴스 IP 목록
+	 * @throws UnknownHostException IP 주소 파싱 중 오류 발생 시
+	 */
 	public IpAccessManager(
 		@Value("#{'${whitelist.private:}'.replaceAll('\\s+', '').split(',')}") Set<String> privateNetworks,
 		@Value("#{'${whitelist.metrics:}'.replaceAll('\\s+', '').split(',')}") Set<String> metricsNetworks,
@@ -109,6 +115,13 @@ public class IpAccessManager {
 			}
 		}
 
+		/**
+		 * 주어진 IP 주소가 허용된 범위 내에 있는지 확인
+		 *
+		 * @param ipAddress 확인할 IP 주소
+		 * @return 허용된 범위 내에 있으면 true, 그렇지 않으면 false
+		 * @throws UnknownHostException IP 주소 파싱 중 오류 발생 시
+		 */
 		public boolean isAllowed(String ipAddress) throws UnknownHostException {
 			if (!StringUtils.hasLength(ipAddress)) {
 				return false;

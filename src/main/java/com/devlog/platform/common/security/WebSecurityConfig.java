@@ -4,6 +4,7 @@ import static com.devlog.platform.common.enums.AccountRole.*;
 
 import java.nio.charset.StandardCharsets;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -19,6 +20,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
 import org.springframework.web.filter.CharacterEncodingFilter;
 
 import com.devlog.platform.common.config.IpAccessManager;
@@ -32,6 +35,9 @@ import lombok.RequiredArgsConstructor;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfig {
+
+	@Value("${spring.session.cookie.secure}")
+	private boolean useSecure;
 
 	private final CustomAuthenticationEntryPointHandler customAuthenticationEntryPointHandler;
 	private final CustomAuthorizationFilter customAuthorizationFilter;
@@ -53,7 +59,7 @@ public class WebSecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable)
-			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
 
 		// 경로별 접근 제어 설정
 		http
@@ -62,7 +68,7 @@ public class WebSecurityConfig {
 					.requestMatchers("/actuator/**", "/error-test")
 					.access((authentication, object) -> {
 						// 관리자 혹은 허용된 ip의 경우만 접근 가능
-						var isAdmin = authentication.get()
+						boolean isAdmin = authentication.get()
 							.getAuthorities()
 							.stream()
 							.anyMatch(it -> it.getAuthority().equals(ADMIN.getValue()));
@@ -81,7 +87,7 @@ public class WebSecurityConfig {
 
 					// health check
 					.requestMatchers("/api/health")
-					.authenticated()
+					.permitAll()
 
 					// swagger
 					.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**")
@@ -117,6 +123,15 @@ public class WebSecurityConfig {
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
+	}
+
+	@Bean
+	public CookieSerializer cookieSerializer() {
+		DefaultCookieSerializer defaultCookieSerializer = new DefaultCookieSerializer();
+		defaultCookieSerializer.setCookieName("JSESSIONID");
+		defaultCookieSerializer.setCookieMaxAge(7 * 24 * 3600);
+		defaultCookieSerializer.setUseSecureCookie(useSecure);
+		return defaultCookieSerializer;
 	}
 
 }

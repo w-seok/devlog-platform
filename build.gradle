@@ -72,8 +72,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    // redis
+    // redis session
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.session:spring-session-data-redis'
 
     // postgresql
     runtimeOnly 'org.postgresql:postgresql'
@@ -83,11 +84,6 @@ dependencies {
     implementation group: 'software.amazon.awssdk', name: 'bom', version: '2.17.105', ext: 'pom'
     implementation 'software.amazon.awssdk:s3'
     implementation group: 'software.amazon.awssdk', name: 's3control', version: '2.17.105'
-
-    // jwt
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
-    implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
-    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 
     // QueryDSL
     implementation "com.querydsl:querydsl-core:${queryDslVersion}"

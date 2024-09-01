@@ -16,15 +16,4 @@ public class InMemoryKeyUtils {
 	public static String generateAbusingRequestCountKey(String prefix, String requestUri, String key) {
 		return String.format("%s:spring:abusingCheck:%s:%s", prefix, requestUri, key);
 	}
-
-	/**
-	 * refresh token key 생성 <br>
-	 * {prefix}:spring:refresh:token:{identifier}
-	 * @param prefix
-	 * @param identifier
-	 * @return
-	 */
-	public static String generateRefreshTokenKey(String prefix, String identifier) {
-		return "%s:spring:refresh:token:%s".formatted(prefix, identifier);
-	}
 }

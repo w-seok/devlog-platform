@@ -9,6 +9,8 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.session.data.redis.config.ConfigureRedisAction;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 import com.devlog.platform.common.property.RedisProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
+@EnableRedisHttpSession(maxInactiveIntervalInSeconds = 24 * 60
+	* 60, redisNamespace = "${spring.session.redis.namespace}")
 public class RedisConfig {
 
 	private final ObjectMapper objectMapper;
@@ -74,4 +78,13 @@ public class RedisConfig {
 		redisTemplate.setValueSerializer(new StringRedisSerializer());
 		return redisTemplate;
 	}
+
+	/**
+	 * @see <a href="https://github.com/spring-projects/spring-session/issues/124">issue - elastiCache</a>
+	 */
+	@Bean
+	ConfigureRedisAction configureRedisAction() {
+		return ConfigureRedisAction.NO_OP;
+	}
+
 }
